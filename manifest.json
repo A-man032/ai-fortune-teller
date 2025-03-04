@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "赛博算命",
+  "version": "1.0",
+  "description": "基于八字和星座的每日运势预测 - 用最科学的技术干最迷信的活儿",
+  "permissions": [
+    "storage",
+    "background",
+    "http://localhost:8080/*",
+    "http://20.151.59.221:8000/*"
+  ],
+  "host_permissions": [
+    "http://localhost:8080/*",
+    "http://20.151.59.221:8000/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval';connect-src http://localhost:8080/callAzureAPI http://20.151.59.221:8000/callAzureAPI"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+B",
+        "mac": "Command+B"
+      }
+    }
+  }
+} 

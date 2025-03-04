@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>赛博算命</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="tab-navigation">
+      <button class="nav-button prev" id="prevTab">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/>
+        </svg>
+      </button>
+      <div class="tab-container">
+        <button class="tab-button active" data-tab="daily">每日一签</button>
+        <button class="tab-button" data-tab="fortune">运势详批</button>
+        <button class="tab-button" data-tab="past-life">前世今生</button>
+        <button class="tab-button" data-tab="love-destiny">正缘测算</button>
+        <button class="tab-button" data-tab="confession">告解室</button>
+      </div>
+      <button class="nav-button next" id="nextTab">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="daily-tab" class="tab-content active">
+      <h1>每日一签</h1>
+      <div class="daily-divination">
+        <div class="fortune-stick">
+          <img src="images/fortune-stick.png" alt="抽签筒" class="fortune-stick-img">
+        </div>
+        <button id="drawBtn" class="draw-button">抽签</button>
+        <div id="drawResult" class="draw-result" style="display: none;">
+          <div class="result-card">
+            <div class="emoji-container">
+              <img id="resultEmoji" src="" alt="表情包">
+            </div>
+            <div class="fortune-text">
+              <h3 id="resultTitle"></h3>
+              <div class="fortune-details">
+                <p><strong>事业：</strong><span id="careerFortune"></span></p>
+                <p><strong>学业：</strong><span id="studyFortune"></span></p>
+                <p><strong>情感：</strong><span id="loveFortune"></span></p>
+                <p><strong>财运：</strong><span id="wealthFortune"></span></p>
+              </div>
+              <div class="daily-advice">
+                <p><strong>今日宜：</strong><span id="goodThings"></span></p>
+                <p><strong>今日忌：</strong><span id="badThings"></span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="detailed-fortune" style="display: none;">
+          <h2>详细运势分析</h2>
+          <div id="detailed-fortune-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="fortune-tab" class="tab-content">
+      <h1>赛博算命</h1>
+      <div class="input-section">
+        <div class="form-group">
+          <label for="birthDate">生辰：</label>
+          <input type="datetime-local" id="birthDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="zodiac">星座：</label>
+          <select id="zodiac">
+            <option value="白羊座">白羊座</option>
+            <option value="金牛座">金牛座</option>
+            <option value="双子座">双子座</option>
+            <option value="巨蟹座">巨蟹座</option>
+            <option value="狮子座">狮子座</option>
+            <option value="处女座">处女座</option>
+            <option value="天秤座">天秤座</option>
+            <option value="天蝎座">天蝎座</option>
+            <option value="射手座">射手座</option>
+            <option value="摩羯座">摩羯座</option>
+            <option value="水瓶座">水瓶座</option>
+            <option value="双鱼座">双鱼座</option>
+          </select>
+        </div>
+        
+        <button id="calculateBtn">查看运势</button>
+      </div>
+
+      <div class="result-section" id="resultSection" style="display: none;">
+        <h2>运势</h2>
+        <div id="fortuneResult"></div>
+      </div>
+    </div>
+
+    <div id="past-life-tab" class="tab-content">
+      <div class="input-section">
+        <h2>穿越前世回放</h2>
+        <p>来看看你上辈子是修仙大佬还是街边小贩？<br>
+        填写下方信息，让AI揭秘你的前世剧情～</p>
+        <div class="input-group">
+          <label for="pastLifeDate">出生日期：</label>
+          <input type="datetime-local" id="pastLifeDate" required>
+        </div>
+        <div class="input-group">
+          <label>性别：</label>
+          <div class="gender-group">
+            <label class="radio-label">
+              <input type="radio" name="gender" value="male" class="radio-input" required>
+              <span class="radio-custom"></span>
+              男
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="gender" value="female" class="radio-input" required>
+              <span class="radio-custom"></span>
+              女
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="gender" value="other" class="radio-input" required>
+              <span class="radio-custom"></span>
+              其他
+            </label>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="birthplace">出生地：</label>
+          <input type="text" id="birthplace" placeholder="例如：北京市朝阳区" required>
+        </div>
+        <button id="calculatePastLife" class="past-life-button">揭示前世今生</button>
+      </div>
+      <div id="pastLifeResult" class="result-section" style="display: none;">
+        <div class="story-container">
+          <h3>您的前世今生</h3>
+          <div id="pastLifeStory" class="story-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="love-destiny-tab" class="tab-content">
+      <div class="input-section">
+        <h2>正缘测算</h2>
+        <p>想知道TA什么时候出现吗？<br>
+        让AI为你解读专属的桃花运势～</p>
+        <div class="input-group">
+          <label for="loveDate">出生日期：</label>
+          <input type="datetime-local" id="loveDate" required>
+        </div>
+        <div class="input-group">
+          <label>性别：</label>
+          <div class="gender-group">
+            <label class="radio-label">
+              <input type="radio" name="love-gender" value="male" class="radio-input" required>
+              <span class="radio-custom"></span>
+              男
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="love-gender" value="female" class="radio-input" required>
+              <span class="radio-custom"></span>
+              女
+            </label>
+          </div>
+        </div>
+        <button id="calculateLove" class="love-destiny-button">揭示姻缘天机</button>
+      </div>
+      <div id="loveResult" class="result-section" style="display: none;">
+        <div class="story-container">
+          <h3>你的姻缘解读</h3>
+          <div id="loveStory" class="story-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="confession-tab" class="tab-content">
+      <div class="confession-section">
+        <h2>心灵告解室</h2>
+        <p>让AI大师倾听你的心声，为你开解烦恼～</p>
+        
+        <div class="chat-container">
+          <div id="chatMessages" class="chat-messages">
+            <div class="message system">
+              欢迎来到心灵告解室，请诉说你的心事，让我为你开解...
+            </div>
+          </div>
+          
+          <div class="chat-input-container">
+            <textarea 
+              id="userMessage" 
+              class="chat-input" 
+              placeholder="在这里输入你想说的话..."
+              rows="3"
+            ></textarea>
+            <button id="sendMessage" class="confession-button">
+              <span>发送</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
