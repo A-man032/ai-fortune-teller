@@ -1,7 +1,9 @@
 import { marked } from './node_modules/marked/lib/marked.esm.js';
 import { fortuneData } from './fortuneData.js';
 import { detailedFortunePrompt, fortunePrompt, pastLifePrompt, loveDestinyPrompt, confessionPrompt } from './prompt.js';
-import { calculateZodiac } from './helper.js';
+import { callAzureAPI, calculateZodiac } from './helper.js';
+import { TarotReading } from './Tarot/tarot.js';
+import { ICON } from './icon.js'
 
 document.addEventListener('DOMContentLoaded', function() {
   const calculateBtn = document.getElementById('calculateBtn');
@@ -15,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const loveDate = document.getElementById('loveDate');
   const loveStory = document.getElementById('loveStory');
   const loveResult = document.getElementById('loveResult');
+
+  const tarotReading = new TarotReading();
+
+  document.querySelector('#prevTab .icon-container').innerHTML = ICON.LEFT_ARROW;
+  document.querySelector('#nextTab .icon-container').innerHTML = ICON.RIGHT_ARROW;
 
   chrome.storage.local.get(['birthDate', 'zodiac', 'gender', 'birthplace', 'love-gender'], function(result) {
     if (result.birthDate) {
@@ -521,67 +528,6 @@ async function handleDetailButtonClick() {
   }
 }
 
-export async function callAzureAPI(messages, resultCallback) {
-  try {
-    // http://localhost:8000/callAzureAPI
-    // http://20.151.59.221:8000/callAzureAPI
-    const response = await fetch('http://localhost:8080/callAzureAPI', {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
-        'Origin': 'chrome-extension://odnepegnnihgclbpnfbegdnnalpgoail'
-      },
-      body: JSON.stringify({ messages: messages })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API 响应错误：', response.status, errorText);
-      throw new Error(`API调用失败: ${response.status} - ${errorText}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let resultText = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      if (value) {
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(line => line.trim() !== '');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              // Parse the JSON data properly
-              const jsonData = JSON.parse(data);
-              if (jsonData.content) {
-                resultText += jsonData.content;
-                if (resultCallback) {
-                  resultCallback(resultText);
-                }
-              }
-            } catch (e) {
-              console.error('解析JSON出错:', e, 'Raw data:', data);
-            }
-          }
-        }
-      }
-    }
-    return resultText;
-  } catch (error) {
-    console.error('API 调用过程出错：', error);
-    throw error;
-  }
-}
-
 function checkLastDrawTime() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['lastDrawTime'], function(result) {
@@ -612,3 +558,11 @@ async function initializeDrawButton() {
     });
   }
 }
+
+// Add this to your existing event listeners
+document.querySelectorAll('.preset-question').forEach(button => {
+  button.addEventListener('click', () => {
+    const question = button.getAttribute('data-question');
+    document.getElementById('tarotQuestion').value = question;
+  });
+});

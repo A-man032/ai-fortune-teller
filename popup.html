@@ -4,26 +4,24 @@
   <meta charset="UTF-8">
   <title>赛博算命</title>
   <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="Tarot/tarot.css">
 </head>
 <body>
   <div class="container">
     <div class="tab-navigation">
       <button class="nav-button prev" id="prevTab">
-        <svg viewBox="0 0 24 24" width="24" height="24">
-          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/>
-        </svg>
+        <span class="icon-container"></span>
       </button>
       <div class="tab-container">
         <button class="tab-button active" data-tab="daily">每日一签</button>
-        <button class="tab-button" data-tab="fortune">运势详批</button>
+        <button class="tab-button" data-tab="tarot">塔罗占卜</button>
         <button class="tab-button" data-tab="past-life">前世今生</button>
+        <button class="tab-button" data-tab="fortune">运势详批</button>
         <button class="tab-button" data-tab="love-destiny">正缘测算</button>
         <button class="tab-button" data-tab="confession">告解室</button>
       </div>
       <button class="nav-button next" id="nextTab">
-        <svg viewBox="0 0 24 24" width="24" height="24">
-          <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" fill="currentColor"/>
-        </svg>
+        <span class="icon-container"></span>
       </button>
     </div>
 
@@ -169,6 +167,55 @@
         <div class="story-container">
           <h3>你的姻缘解读</h3>
           <div id="loveStory" class="story-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tarot-tab" class="tab-content">
+      <div id="tarotSection" class="tarot-section">
+        <h2>塔罗占卜</h2>
+        <p>让塔罗牌为你指引前方的道路～</p>
+        
+        <div class="tarot-container">
+          <div class="tarot-question-section">
+            <textarea 
+              id="tarotQuestion" 
+              class="tarot-input" 
+              placeholder="请输入你想要解答的问题..."
+              rows="3"
+            ></textarea>
+            
+            <div class="preset-questions">
+              <button class="preset-question" data-question="未来三个月的运势如何？">未来三个月的运势如何？</button>
+              <button class="preset-question" data-question="脱单:下一任讯息~">脱单:下一任讯息~</button>
+              <button class="preset-question" data-question="事业上应该注意些什么？">事业上应该注意些什么？</button>
+              <button class="preset-question" data-question="近期的财运怎么样？">近期的财运怎么样？</button>
+            </div>
+            
+            <button id="startTarotReading" class="tarot-button">开始占卜</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tarotReadingArea" class="tarot-reading-area" style="display: none;">
+        <div class="tarot-cards-container">
+          <div class="tarot-card" data-position="past">
+            <div class="card-back">过去</div>
+            <img class="card-front" src="" alt="" style="display: none;">
+          </div>
+          <div class="tarot-card" data-position="present">
+            <div class="card-back">现在</div>
+            <img class="card-front" src="" alt="" style="display: none;">
+          </div>
+          <div class="tarot-card" data-position="future">
+            <div class="card-back">未来</div>
+            <img class="card-front" src="" alt="" style="display: none;">
+          </div>
+        </div>
+        
+        <div id="tarotInterpretation" class="tarot-interpretation" style="display: none;">
+          <h3>塔罗解读</h3>
+          <div class="interpretation-content"></div>
         </div>
       </div>
     </div>
