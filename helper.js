@@ -1,6 +1,6 @@
 import { TAROT_CARDS } from './constant.js';
 
-export async function callAzureAPI(messages, resultCallback) {
+export const callAzureAPI = async (messages, onChunk, onComplete) => {
   try {
     // http://20.151.59.221:8000/callAzureAPI
     const response = await fetch('http://localhost:8080/callAzureAPI', {
@@ -26,7 +26,10 @@ export async function callAzureAPI(messages, resultCallback) {
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        onComplete && onComplete();
+        break;
+      }
       
       if (value) {
         const chunk = decoder.decode(value, { stream: true });
@@ -42,8 +45,8 @@ export async function callAzureAPI(messages, resultCallback) {
               const jsonData = JSON.parse(data);
               if (jsonData.content) {
                 resultText += jsonData.content;
-                if (resultCallback) {
-                  resultCallback(resultText);
+                if (onChunk) {
+                  onChunk(resultText);
                 }
               }
             } catch (e) {
@@ -53,12 +56,12 @@ export async function callAzureAPI(messages, resultCallback) {
         }
       }
     }
-    return resultText;
+    return completeText;
   } catch (error) {
     console.error('API 调用过程出错：', error);
     throw error;
   }
-}
+};
 
 export function calculateZodiac(month, day) {
   const zodiacDates = {

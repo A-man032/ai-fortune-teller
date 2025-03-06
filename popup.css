@@ -78,6 +78,7 @@ body {
   flex-direction: column;
   flex-grow: 1;     /* 允许容器增长 */
   overflow-y: auto;
+  font-size: 16px;
 }
 
 h1 {
@@ -204,7 +205,7 @@ button:hover {
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;

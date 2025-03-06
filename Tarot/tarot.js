@@ -1,12 +1,13 @@
 import { marked } from '../node_modules/marked/lib/marked.esm.js';
 import { getAllTarotCards, getBackOfTheCard, callAzureAPI } from '../helper.js';
 import { ICON } from '../icon.js';
-import { tarotPrompt } from '../prompt.js';
+import { SPREADS } from '../constant.js';
 
 export class TarotReading {
   constructor() {
     this.cards = getAllTarotCards();
     this.selectedCards = [];
+    this.selectedSpread = null;
     this.initializeElements();
     this.bindEvents();
   }
@@ -30,7 +31,40 @@ export class TarotReading {
       return;
     }
 
-    this.showShufflingOverlay();
+    this.showSpreadSelector();
+  }
+
+  showSpreadSelector() {
+    const overlay = document.createElement('div');
+    overlay.className = 'tarot-overlay spread-selector';
+
+    const container = document.createElement('div');
+    container.className = 'spread-selector-container';
+
+    const title = document.createElement('h2');
+    title.textContent = '选择牌阵';
+    container.appendChild(title);
+
+    Object.values(SPREADS).forEach(spread => {
+      const spreadCard = document.createElement('div');
+      spreadCard.className = 'spread-card';
+      spreadCard.innerHTML = `
+        <h3>${spread.name}</h3>
+        <p>${spread.description}</p>
+        <div class="spread-info">需要抽取 ${spread.count} 张牌</div>
+      `;
+
+      spreadCard.addEventListener('click', () => {
+        this.selectedSpread = spread;
+        overlay.remove();
+        this.showShufflingOverlay();
+      });
+
+      container.appendChild(spreadCard);
+    });
+
+    overlay.appendChild(container);
+    document.body.appendChild(overlay);
   }
 
   showShufflingOverlay() {
@@ -86,8 +120,8 @@ export class TarotReading {
       // Store original rotation as a CSS variable
       cardElement.style.setProperty('--originalRotation', `${originalRotation}deg`);
       cardElement.style.transform = `rotate(${originalRotation}deg)`;
-      cardElement.style.left = `${Math.random() * 60}%`;
-      cardElement.style.top = `${Math.random() * 60}%`;
+      cardElement.style.left = `${Math.random() * 80}%`;
+      cardElement.style.top = `${Math.random() * 80}%`;
       deckContainer.appendChild(cardElement);
     });
 
@@ -108,6 +142,13 @@ export class TarotReading {
     
     // Clear and show shuffled deck for selection
     overlay.innerHTML = '';
+    
+    // Add counter text
+    const counterText = document.createElement('div');
+    counterText.className = 'cards-counter';
+    counterText.textContent = `请抽取 ${this.selectedSpread.count} 张牌`;
+    overlay.appendChild(counterText);
+    
     const cardContainer = document.createElement('div');
     cardContainer.className = 'cards-circle';
     
@@ -150,39 +191,27 @@ export class TarotReading {
     overlay.appendChild(cardContainer);
   }
 
-  createCardDeck() {
-    const deckContainer = document.createElement('div');
-    deckContainer.className = 'tarot-deck';
-    
-    this.cards.forEach((card, index) => {
-      const cardElement = document.createElement('div');
-      cardElement.className = 'tarot-card-small';
-      cardElement.innerHTML = `<img src="${getBackOfTheCard()}" alt="Card Back">`;
-      cardElement.style.transform = `rotate(${Math.random() * 360}deg)`;
-      cardElement.style.left = `${Math.random() * 60}%`;
-      cardElement.style.top = `${Math.random() * 60}%`;
-      deckContainer.appendChild(cardElement);
-    });
-
-    this.readingArea.innerHTML = '';
-    this.readingArea.appendChild(deckContainer);
-    this.readingArea.style.display = 'block';
-  }
-
   async selectCard(card, element) {
-    if (this.selectedCards.length >= 3) return;
+    if (this.selectedCards.length >= this.selectedSpread.count) return;
 
     const isReversed = Math.random() < 0.5;
     this.selectedCards.push({
       ...card,
       isReversed,
-      position: ['过去', '现在', '未来'][this.selectedCards.length]
+      position: this.selectedSpread.positions[this.selectedCards.length]
     });
 
     element.classList.add('selected');
     element.style.pointerEvents = 'none';
 
-    if (this.selectedCards.length === 3) {
+    // Update counter text
+    const counterText = document.querySelector('.cards-counter');
+    const remainingCards = this.selectedSpread.count - this.selectedCards.length;
+    if (counterText && remainingCards > 0) {
+        counterText.textContent = `还需抽取 ${remainingCards} 张牌`;
+    }
+
+    if (this.selectedCards.length === this.selectedSpread.count) {
       console.log("selectCard");
         // 移除浮层
         const overlay = document.querySelector('.tarot-overlay');
@@ -316,7 +345,7 @@ resetToInitialState() {
   }
 
   async getAIInterpretation(question) {
-    const messages = [...tarotPrompt,
+    const messages = [...this.selectedSpread.prompt,
       {
         role: "user",
         content: `问题：${question}\n\n抽到的牌：\n${this.selectedCards.map(card => 
@@ -326,24 +355,154 @@ resetToInitialState() {
     ];
 
     try {
-      let accumulatedText = '';
-      await callAzureAPI(messages, (result) => {
         const interpretationElement = document.querySelector('.interpretation-text');
-        if (interpretationElement) {
-          // 使用 marked 转换累积的文本并更新显示
-          interpretationElement.innerHTML = marked(result);
-          // 滚动到新内容
-          interpretationElement.style.opacity = '0';
-          requestAnimationFrame(() => {
-            interpretationElement.style.transition = 'opacity 1s ease-in';
-            interpretationElement.style.opacity = '1';
-          });
-        }
-      });
-      return accumulatedText;
+        if (!interpretationElement) return;
+
+        // Create conversation container
+        const conversationContainer = document.createElement('div');
+        conversationContainer.className = 'conversation-container';
+        interpretationElement.appendChild(conversationContainer);
+
+        // Show loading state
+        conversationContainer.innerHTML = '<div class="loading">正在解读塔罗牌...</div>';
+        
+        // Wait for the complete response
+        await new Promise((resolve) => {
+            callAzureAPI(messages, (result) => {
+                conversationContainer.innerHTML = marked(result);
+            }, () => {
+                // Streaming complete callback
+                conversationContainer.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    conversationContainer.style.transition = 'opacity 1s ease-in';
+                    conversationContainer.style.opacity = '1';
+                    resolve();
+                });
+            });
+        });
+
+        // Add follow-up section after conversation container
+        this.createFollowUpSection(interpretationElement);
     } catch (error) {
-      console.error('塔罗牌解读失败：', error);
-      return '## 解读失败\n\n抱歉，塔罗牌解读遇到了一些问题，请稍后再试。';
+        console.error('塔罗牌解读失败：', error);
+        interpretationElement.innerHTML = marked('## 解读失败\n\n抱歉，塔罗牌解读遇到了一些问题，请稍后再试。');
     }
-  }
+}
+
+createFollowUpSection(container) {
+    // Create or get follow-up section
+    let followUpSection = container.querySelector('.follow-up-section');
+    if (!followUpSection) {
+        followUpSection = document.createElement('div');
+        followUpSection.className = 'follow-up-section';
+        container.appendChild(followUpSection);
+    }
+
+    // Create follow-up button
+    const button = document.createElement('button');
+    button.className = 'continue-button';
+    button.textContent = '我想再聊聊';
+
+    // Create input area
+    const inputArea = document.createElement('div');
+    inputArea.className = 'continue-input hidden';
+    inputArea.innerHTML = `
+        <textarea class="follow-up-textarea" placeholder="请输入你想进一步了解的内容..." rows="3"></textarea>
+        <button class="submit-follow-up">发送</button>
+    `;
+
+    // Handle button click
+    button.addEventListener('click', () => {
+        button.classList.add('hidden');
+        inputArea.classList.remove('hidden');
+        inputArea.querySelector('textarea').focus();
+    });
+
+    // Handle submit
+    inputArea.querySelector('.submit-follow-up').addEventListener('click', async () => {
+        const followUpQuestion = inputArea.querySelector('textarea').value.trim();
+        if (!followUpQuestion) return;
+
+        // Hide follow-up section completely
+        followUpSection.classList.add('hidden');
+
+        // Add user question to conversation
+        const userQuestion = document.createElement('div');
+        userQuestion.className = 'user-question';
+        userQuestion.innerHTML = `
+            <hr class="conversation-divider">
+            <div class="question-content">
+                <strong>追问：</strong>
+                <p>${marked(followUpQuestion)}</p>
+            </div>
+        `;
+        container.appendChild(userQuestion); // Changed from insertBefore to appendChild
+
+        // Create response container
+        const followUpResponse = document.createElement('div');
+        followUpResponse.className = 'follow-up-response';
+        followUpResponse.innerHTML = '<div class="loading">正在思考中...</div>';
+        container.appendChild(followUpResponse); // Changed from insertBefore to appendChild
+
+        try {
+            const messages = [
+                ...this.selectedSpread.prompt,
+                {
+                    role: "system",
+                    content: "这是一个追问，请基于之前的解读继续深入分析。"
+                },
+                {
+                    role: "assistant",
+                    content: `牌阵信息：\n${this.selectedCards.map(card => 
+                        `${card.position}：${card.name}${card.isReversed ? '（逆位）' : '（正位）'}`
+                    ).join('\n')}\n\n之前的解读：\n${Array.from(container.children)
+                        .filter(el => !el.classList.contains('follow-up-section'))
+                        .map(el => el.textContent)
+                        .join('\n\n')}`
+                },
+                {
+                    role: "user",
+                    content: followUpQuestion
+                }
+            ];
+
+            await new Promise((resolve) => {
+                callAzureAPI(messages, (result) => {
+                    // Update the response content directly
+                    followUpResponse.innerHTML = marked(result);
+                    followUpResponse.style.opacity = '0';
+                    requestAnimationFrame(() => {
+                        followUpResponse.style.transition = 'opacity 0.5s ease-in';
+                        followUpResponse.style.opacity = '1';
+                    });
+                }, async () => {
+                    // When streaming is complete
+                    // Reset and show follow-up section
+                    inputArea.querySelector('textarea').value = '';
+                    inputArea.classList.add('hidden');
+                    button.classList.remove('hidden');
+                    followUpSection.classList.remove('hidden');
+                    resolve();
+                });
+            });
+
+            // Move follow-up section to the end
+            container.appendChild(followUpSection);
+        } catch (error) {
+            console.error('Follow-up interpretation failed:', error);
+            followUpResponse.innerHTML = `
+                <div class="error-message">
+                    <h3>解读失败</h3>
+                    <p>抱歉，解读遇到了一些问题，请稍后再试。</p>
+                </div>
+            `;
+            // Show follow-up section even on error
+            followUpSection.classList.remove('hidden');
+        }
+    });
+
+    followUpSection.innerHTML = '';
+    followUpSection.appendChild(button);
+    followUpSection.appendChild(inputArea);
+}
 }
